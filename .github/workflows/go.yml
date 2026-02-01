@@ -1,0 +1,128 @@
+name: Go CI/CD
+
+on:
+  push:
+    branches: [main, master]
+    tags:
+      - 'v*'
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+
+      - name: Download dependencies
+        run: go mod download
+
+      - name: Run tests
+        run: go test -v -race -coverprofile=coverage.out ./...
+
+      - name: Upload coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: coverage.out
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+
+      - name: Run golangci-lint
+        uses: golangci/golangci-lint-action@v6
+        with:
+          version: latest
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    needs: [test, lint]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+
+      - name: Build (verify)
+        run: |
+          CGO_ENABLED=0 go build -o spoof ./cmd/spoof
+
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    needs: [test, lint]
+    if: startsWith(github.ref, 'refs/tags/v')
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+
+      - name: Get version
+        id: version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+      - name: Build all platforms
+        run: |
+          VERSION=${{ steps.version.outputs.VERSION }}
+          BUILD_TIME=$(date -u '+%Y-%m-%d_%H:%M:%S')
+          LDFLAGS="-s -w -X main.Version=${VERSION} -X main.BuildTime=${BUILD_TIME}"
+
+          mkdir -p dist
+
+          # Linux builds
+          GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -ldflags="${LDFLAGS}" -o dist/spoof-linux-amd64 ./cmd/spoof
+          GOOS=linux GOARCH=386 CGO_ENABLED=0 go build -ldflags="${LDFLAGS}" -o dist/spoof-linux-386 ./cmd/spoof
+          GOOS=linux GOARCH=arm64 CGO_ENABLED=0 go build -ldflags="${LDFLAGS}" -o dist/spoof-linux-arm64 ./cmd/spoof
+          GOOS=linux GOARCH=arm GOARM=7 CGO_ENABLED=0 go build -ldflags="${LDFLAGS}" -o dist/spoof-linux-armv7 ./cmd/spoof
+          GOOS=linux GOARCH=arm GOARM=6 CGO_ENABLED=0 go build -ldflags="${LDFLAGS}" -o dist/spoof-linux-armv6 ./cmd/spoof
+          GOOS=linux GOARCH=mips CGO_ENABLED=0 go build -ldflags="${LDFLAGS}" -o dist/spoof-linux-mips ./cmd/spoof
+          GOOS=linux GOARCH=mipsle CGO_ENABLED=0 go build -ldflags="${LDFLAGS}" -o dist/spoof-linux-mipsle ./cmd/spoof
+          GOOS=linux GOARCH=mips64 CGO_ENABLED=0 go build -ldflags="${LDFLAGS}" -o dist/spoof-linux-mips64 ./cmd/spoof
+          GOOS=linux GOARCH=mips64le CGO_ENABLED=0 go build -ldflags="${LDFLAGS}" -o dist/spoof-linux-mips64le ./cmd/spoof
+          GOOS=linux GOARCH=ppc64 CGO_ENABLED=0 go build -ldflags="${LDFLAGS}" -o dist/spoof-linux-ppc64 ./cmd/spoof
+          GOOS=linux GOARCH=ppc64le CGO_ENABLED=0 go build -ldflags="${LDFLAGS}" -o dist/spoof-linux-ppc64le ./cmd/spoof
+          GOOS=linux GOARCH=riscv64 CGO_ENABLED=0 go build -ldflags="${LDFLAGS}" -o dist/spoof-linux-riscv64 ./cmd/spoof
+          GOOS=linux GOARCH=s390x CGO_ENABLED=0 go build -ldflags="${LDFLAGS}" -o dist/spoof-linux-s390x ./cmd/spoof
+          GOOS=linux GOARCH=loong64 CGO_ENABLED=0 go build -ldflags="${LDFLAGS}" -o dist/spoof-linux-loong64 ./cmd/spoof
+
+      - name: Generate checksums
+        run: |
+          cd dist
+          sha256sum * > checksums.txt
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/*
+          generate_release_notes: true
+          draft: false
+          prerelease: ${{ contains(github.ref, '-rc') || contains(github.ref, '-beta') || contains(github.ref, '-alpha') }}
