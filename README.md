@@ -140,9 +140,16 @@ Here is a detailed breakdown of the `config.json` parameters required to operate
 | `crypto.private_key`| String | The node's private key (Base64) generated via `generate-keys`. |
 | `crypto.peer_public_key`| String| The peer's public key (Base64). Client puts Server's public key here, and vice versa. |
 | **`performance`** | | |
+| `performance.buffer_size` | Integer | Buffer size |
+| `performance.read_buffer` | Integer | |
+| `performance.write_buffer` | Integer | |
 | `performance.mtu` | Integer| Maximum payload sizing before tunnel encapsulation. Crucial to adjust down (e.g., `1300` or `1400`) to avoid Layer 3 IP fragmentation. |
 | `performance.session_timeout` | Integer| General session timeout duration in seconds. |
 | `performance.workers` | Integer| Number of concurrent packet processing workers. |
+| **`fec`** | | |
+| `fec.enabled` | Boolean | enable or disable the fec(true/false) | 
+| `fec.data_shards` | Integer | real data |
+| `fec.parity_shards` | Integer | trash data |
 | **`reliability`** | | |
 | `reliability.enabled` | Boolean| Set to `true` to enable the custom TCP-like delivery layer. |
 | `reliability.window_size` | Integer| Maximum number of unacknowledged packets allowed in-flight simultaneously. |
