@@ -5,6 +5,23 @@ Spoof Tunnel is a Layer 3/Layer 4 tunneling proxy designed to bypass Deep Packet
 
 Unlike traditional tunneling protocols that establish a stateful connection between a fixed client IP and a fixed server IP, Spoof Tunnel completely decouples the logical session from the physical network addresses by forging the `Source IP` field in the IP header at both endpoints.
 
+> [!IMPORTANT]
+> Both your servers must be able to send spoofed packets.
+> 
+> To test this, you can use the following command temporarily on any of your servers:
+> 
+> iptables -t nat -A POSTROUTING -d target-ip -j SNAT --to-source spoof-ip
+> 
+> then:
+> 
+> ping target-ip
+> 
+> and use a tool like tcpdump on the opposite server:
+> 
+> tcpdump icmp
+> 
+> if you see the spoofed packets, means your source side can send spoofed packet.
+
 ### How the Project Came to Be: The Origin of Spoof Tunnel
 The concept of a bidirectional spoofing tunnel emerged in response to the severe internet blackout in Iran following the bloody uprising on January 8 and 9, 2026 (18-19 Dey 1404). During this complete disconnection from the global internet, our primary objective was to reverse-engineer the exact scope and layer of the imposed restrictions.
 
