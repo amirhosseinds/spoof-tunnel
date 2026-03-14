@@ -143,9 +143,16 @@ sudo ./spoof client -c client-config.json
 | `crypto.private_key`| رشته | کلید خصوصی ساخته شده از طریق دستور `generate-keys`. |
 | `crypto.peer_public_key`| رشته | کلید عمومی سیستم مقابل. (در کلاینت، کلید عمومی سرور درج می‌شود و بالعکس). |
 | **`performance`** | | |
+| `performance.buffer_size` | Integer | حجم بافر |
+| `performance.read_buffer` | Integer | |
+| `performance.write_buffer` | Integer | |
 | `performance.mtu` | عدد | حداکثر حجم قابل بارگذاری (Payload) قبل از انجام پروسه کپسوله‌سازی تونل. بهتر است برای جلوگیری از مشکل قطعه‌قطعه شدن پکت‌ها (L3 Fragmentation) مقدار پایین‌تری (مثلا `1300` یا `1400`) ست شود. |
 | `performance.session_timeout` | عدد | حداکثر زمان طول عمر کانکشن و از بین رفتن سشن به واحد ثانیه در صورت عدم فعالیت. |
 | `performance.workers` | عدد | تعداد Thread های پردازشی برای دریافت همزمان پکت‌ها. |
+| **`fec`** | | |
+| `fec.enabled` | Boolean | فعال یا غیر فعال کردن fec(true/false) | 
+| `fec.data_shards` | Integer | ضریب دیتای واقعی |
+| `fec.parity_shards` | Integer | ضریب دیتای ساختگی |
 | **`reliability`** | | (تنظیمات لایه تضمین کیفیت و ارسال مجدد بسته‌ها) |
 | `reliability.enabled` | بولین | با قرار دادن مقدار `true`، لایه پایداری که توالی پکت‌ها را مدیریت می‌کند فعال می‌شود. |
 | `reliability.window_size` | عدد | تعداد مجاز پکت‌هایی که می‌توانند بصورت In-flight در شبکه رها شوند پیش از آنکه متوقف شده و منتظر دریافت ACK از گیرنده بمانند. |
