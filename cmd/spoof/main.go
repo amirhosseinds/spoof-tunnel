@@ -146,6 +146,9 @@ func runClient(cfg *config.Config, cipher *crypto.Cipher, sigCh chan os.Signal) 
 	fmt.Println()
 	log.Printf(blue("Starting client mode..."))
 
+	fmt.Println()
+	log.Printf(blue("Starting client mode..."))
+
 	client, err := tunnel.NewClient(cfg, cipher)
 	if err != nil {
 		log.Printf(red("Failed to create client"))

@@ -38,7 +38,18 @@
     "read_buffer": 4194304,
     "write_buffer": 4194304
   },
+<<<<<<< dev
   "logging": {
     "level": "info"
+=======
+  "fec": {
+    "enabled": false,
+    "data_shards": 10,
+    "parity_shards": 3
+  },
+  "logging": {
+    "level": "info",
+    "file": ""
+>>>>>>> main
   }
 }
