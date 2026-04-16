@@ -35,7 +35,7 @@ type DirectConn struct {
 func NewDirectConn(tcpConn net.Conn, target string) *DirectConn {
 	return &DirectConn{
 		tcpConn:  tcpConn,
-		uploadCh: make(chan []byte, 512), // Larger buffer for uploads
+		uploadCh: make(chan []byte, 4096),
 		closeCh:  make(chan struct{}),
 		target:   target,
 	}

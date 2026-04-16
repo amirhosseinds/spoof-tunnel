@@ -75,7 +75,7 @@ func (m *Multiplexer) OpenStream(target string, localConn net.Conn) (*Stream, er
 		LocalConn:  localConn,
 		Created:    time.Now(),
 		LastActive: time.Now(),
-		recvCh:     make(chan []byte, 256),
+		recvCh:     make(chan []byte, 4096),
 	}
 
 	m.streamsMu.Lock()
@@ -149,11 +149,15 @@ func (m *Multiplexer) HandleData(payload []byte) {
 		stream.LastActive = time.Now()
 		stream.mu.Unlock()
 
-		// Deliver to stream
+		// Deliver to stream — block briefly under backpressure instead of dropping
 		select {
 		case stream.recvCh <- data:
 		default:
-			log.Printf("[MUX] stream %d buffer full, dropping", streamID)
+			select {
+			case stream.recvCh <- data:
+			case <-time.After(500 * time.Millisecond):
+				log.Printf("[MUX] stream %d buffer full, dropping", streamID)
+			}
 		}
 
 	case MuxStreamClose:

@@ -157,7 +157,7 @@ func (c *Client) startRelayInbound(listenAddr string) error {
 		Target:     "relay:" + listenAddr,
 		Created:    time.Now(),
 		LastActive: time.Now(),
-		recvCh:     make(chan []byte, 512),
+		recvCh:     make(chan []byte, 4096),
 		uploadSeq:  1,
 	}
 
@@ -306,7 +306,7 @@ func (c *Client) handleForwardConn(conn net.Conn, target string) {
 		LocalConn:  conn,
 		Created:    time.Now(),
 		LastActive: time.Now(),
-		recvCh:     make(chan []byte, 512),
+		recvCh:     make(chan []byte, 4096),
 		uploadSeq:  1,
 	}
 
