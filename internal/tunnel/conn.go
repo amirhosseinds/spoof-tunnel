@@ -43,8 +43,8 @@ func (a TunnelAddr) String() string  { return a.address }
 func NewTunnelConnPair(target string) (*TunnelConn, *TunnelConn) {
 	// Create shared pair state
 	pair := &TunnelConnPair{
-		ch1:     make(chan []byte, 256),
-		ch2:     make(chan []byte, 256),
+		ch1:     make(chan []byte, 4096),
+		ch2:     make(chan []byte, 4096),
 		closeCh: make(chan struct{}),
 	}
 

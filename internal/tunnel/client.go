@@ -253,7 +253,7 @@ func (c *Client) handleConnect(target string) (net.Conn, error) {
 		Target:     target,
 		Created:    time.Now(),
 		LastActive: time.Now(),
-		recvCh:     make(chan []byte, 256),
+		recvCh:     make(chan []byte, 4096),
 	}
 
 	c.sessionsMu.Lock()
@@ -319,7 +319,7 @@ func (c *Client) handleStream(target string, tcpConn net.Conn) error {
 		LocalConn:  tcpConn, // Store real TCP conn for direct writes
 		Created:    time.Now(),
 		LastActive: time.Now(),
-		recvCh:     make(chan []byte, 512), // Larger buffer
+		recvCh:     make(chan []byte, 4096),
 		uploadSeq:  1,                      // Start sequence at 1
 	}
 
@@ -834,11 +834,15 @@ func (c *Client) receiveLoop() {
 			continue // ACK packets don't go to session channel
 		}
 
-		// Send to session channel (non-blocking)
+		// Send to session channel — block briefly under backpressure instead of dropping
 		select {
 		case sess.recvCh <- plaintext:
 		default:
-			log.Printf("[RECV] session %d buffer full, dropping packet", header.SessionID)
+			select {
+			case sess.recvCh <- plaintext:
+			case <-time.After(500 * time.Millisecond):
+				log.Printf("[RECV] session %d buffer full, dropping packet", header.SessionID)
+			}
 		}
 	}
 	log.Printf("[RECV] loop ended, total packets received: %d", packetCount)
@@ -897,11 +901,15 @@ func (c *Client) processRecoveredPacket(ciphertext []byte) {
 		return
 	}
 
-	// Send to session channel
+	// Send to session channel — block briefly under backpressure instead of dropping
 	select {
 	case sess.recvCh <- plaintext:
 	default:
-		log.Printf("[FEC] session %d buffer full, dropping recovered packet", header.SessionID)
+		select {
+		case sess.recvCh <- plaintext:
+		case <-time.After(500 * time.Millisecond):
+			log.Printf("[FEC] session %d buffer full, dropping recovered packet", header.SessionID)
+		}
 	}
 }
 
